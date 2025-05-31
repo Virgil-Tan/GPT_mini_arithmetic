@@ -7,7 +7,7 @@ from utils import *
 
 def parse_args():
     p = argparse.ArgumentParser(description="Mini GPT Arithmetic")
-    p.add_argument("--max-iters",   type=int,   default=25000)
+    p.add_argument("--max-iters",   type=int,   default=10000)
     p.add_argument("--eval-interval",type=int,  default=1000)
     p.add_argument("--batch-size",  type=int,   default=64)
     p.add_argument("--lr",          type=float, default=3e-4)
@@ -18,7 +18,7 @@ def parse_args():
     p.add_argument("--dropout",     type=float, default=0.1)
     p.add_argument("--resume",      action="store_true")
     p.add_argument("--resume-add",  type=str,   default=None)
-    p.add_argument("--save-interval",type=int,  default=10000)
+    p.add_argument("--save-interval",type=int,  default=5000)
     return p.parse_args()
 
 if __name__ == "__main__":
@@ -41,10 +41,10 @@ if __name__ == "__main__":
 
     encode, decode = get_encode_decode(CHARS)
     lines = (
-        generate_all_data(100000,4)
-      + generate_all_data(60000,3)
-      + generate_all_data(40000,2)
-      + generate_all_data(20000,1)
+        generate_all_data2(100000,4)
+      + generate_all_data2(60000,3)
+      + generate_all_data2(40000,2)
+      + generate_all_data2(20000,1)
     )
     random.shuffle(lines)
     full_text = "".join(lines)
@@ -67,10 +67,10 @@ if __name__ == "__main__":
     )
 
     test_lines = (
-        generate_all_data(1400,4)
-    + generate_all_data(1000,3)
-    + generate_all_data(100,2)
-    + generate_all_data(20,1)
+        generate_all_data2(1400,4)
+    + generate_all_data2(1000,3)
+    + generate_all_data2(100,2)
+    + generate_all_data2(20,1)
     )
     random.shuffle(test_lines)
     test_prompts, test_answers = generate_prompts(test_lines)

@@ -51,11 +51,27 @@ def generate_minus_data(N: int, max_digits: int) -> list[str]:
         data.append(f"{a}-{b}={c}\n")
     return data
 
-def generate_all_data(N: int, max_digits: int) -> list[str]:
+def generate_all_data1(N: int, max_digits: int) -> list[str]:
     data = []
     for _ in range(N):
         a = random.randint(10**(max_digits-1), 10**max_digits - 1)
         b = random.randint(10**(max_digits-1), 10**max_digits - 1)
+        q = a // b
+        r = a % b
+        data.append(f"{a}/{b}={q}.{r}/{b}\n")
+        a_mu = a*b
+        data.append(f"{a}*{b}={a_mu}\n")
+        a_a = a+b
+        data.append(f"{a}+{b}={a_a}\n")
+        a_m = a-b
+        data.append(f"{a}-{b}={a_m}\n")
+    return data
+
+def generate_all_data2(N: int, max_digits: int) -> list[str]:
+    data = []
+    for _ in range(N):
+        a = random.randint(1, 10**max_digits - 1)
+        b = random.randint(1, 10**max_digits - 1)
         q = a // b
         r = a % b
         data.append(f"{a}/{b}={q}.{r}/{b}\n")
