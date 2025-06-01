@@ -17,8 +17,8 @@ def get_encode_decode(CHARS):
 def generate_division_data(N: int, max_digits: int) -> list[str]:
     data = []
     for _ in range(N):
-        a = random.randint(1**max_digits, 10**max_digits - 1)
-        b = random.randint(1**max_digits, 10**max_digits - 1)
+        a = random.randint(10**(max_digits-1), 10**max_digits - 1)
+        b = random.randint(10**(max_digits-1), 10**max_digits - 1)
         q = a // b
         r = a % b
         data.append(f"{a}/{b}={q}.{r}/{b}\n")

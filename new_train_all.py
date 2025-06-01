@@ -42,8 +42,14 @@ if __name__ == "__main__":
     encode, decode = get_encode_decode(CHARS)
     lines = (
         generate_all_data2(100000,4)
+      + generate_division_data(10000,4)
+      + generate_multi_data(10000,4)
+
       + generate_all_data2(60000,3)
-      + generate_all_data2(40000,2)
+      + generate_division_data(10000,3)
+      + generate_multi_data(10000,3)
+
+      + generate_all_data2(20000,2)
       + generate_all_data2(20000,1)
     )
     random.shuffle(lines)
