@@ -28,19 +28,19 @@ def parse_args():
 def build_lines_for_stage(stage: int):
     lines = []
     if stage >= 1:
-        for d in [1, 2]:
-            lines += generate_add_data(30000, d)
-            lines += generate_minus_data(30000, d)
-            lines += generate_multi_data(40000, d)
-            lines += generate_division_data(40000, d)
+        d = 1
+        lines += generate_add_data(30000, d)
+        lines += generate_minus_data(30000, d)
+        lines += generate_multi_data(40000, d)
+        lines += generate_division_data(40000, d)
     if stage >= 2:
-        d = 3
+        d = 2
         lines += generate_add_data(15000, d)
         lines += generate_minus_data(15000, d)
         lines += generate_multi_data(100000, d)
         lines += generate_division_data(100000, d)
     if stage >= 3:
-        d = 4
+        d = 3
         lines += generate_add_data(15000, d)
         lines += generate_minus_data(15000, d)
         lines += generate_multi_data(200000, d)
@@ -65,7 +65,7 @@ def build_loader_from_lines(lines: list[str], block_size: int, batch_size: int):
         ds,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=4,
+        num_workers=3,
         pin_memory=True
     )
 
@@ -112,10 +112,6 @@ if __name__ == "__main__":
         start_iter = 1
 
     test_lines = (
-        generate_add_data(1400, 4) +
-        generate_minus_data(1400, 4) +
-        generate_multi_data(1400, 4) +
-        generate_division_data(1400, 4) +
         generate_add_data(1000, 3) +
         generate_minus_data(1000, 3) +
         generate_multi_data(1000, 3) +
@@ -124,10 +120,10 @@ if __name__ == "__main__":
         generate_minus_data(100, 2) +
         generate_multi_data(100, 2) +
         generate_division_data(100, 2) +
-        generate_add_data(20, 1) +
-        generate_minus_data(20, 1) +
-        generate_multi_data(20, 1) +
-        generate_division_data(20, 1)
+        generate_add_data(30, 1) +
+        generate_minus_data(30, 1) +
+        generate_multi_data(30, 1) +
+        generate_division_data(30, 1)
     )
     random.shuffle(test_lines)
     test_prompts, test_answers = generate_prompts(test_lines)
@@ -165,7 +161,7 @@ if __name__ == "__main__":
     it = start_iter
     loader1_iter = iter(loader1)
 
-    print(f"\n======== Stage 1: step to {STAGE1_IT} , only 1,2 digit ========\n")
+    print(f"\n======== Stage 1: step to {STAGE1_IT} , only 1 digit ========\n")
     while it <= STAGE1_IT:
         try:
             x, y = next(loader1_iter)
