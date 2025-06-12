@@ -11,18 +11,18 @@ from utils import *
 
 def parse_args():
     p = argparse.ArgumentParser(description="Mini GPT Arithmetic with Curriculum, Replay, Warmup+Cosine, and Grad Clipping")
-    p.add_argument("--max-iters",    type=int,   default=60000)
-    p.add_argument("--eval-interval", type=int,   default=5000)
+    p.add_argument("--max-iters",    type=int,   default=100000)
+    p.add_argument("--eval-interval", type=int,   default=2000)
     p.add_argument("--batch-size",   type=int,   default=64)
     p.add_argument("--lr",           type=float, default=3e-4)
     p.add_argument("--block-size",   type=int,   default=128)
-    p.add_argument("--n-layer",      type=int,   default=8)
+    p.add_argument("--n-layer",      type=int,   default=6)
     p.add_argument("--n-head",       type=int,   default=8)
     p.add_argument("--n-embd",       type=int,   default=512)
     p.add_argument("--dropout",      type=float, default=0.1)
     p.add_argument("--resume",       action="store_true")
     p.add_argument("--resume-add",   type=str,   default=None)
-    p.add_argument("--save-interval",type=int,   default=5000)
+    p.add_argument("--save-interval",type=int,   default=10000)
     return p.parse_args()
 
 def build_lines_for_stage(stage: int):
@@ -43,8 +43,8 @@ def build_lines_for_stage(stage: int):
         d = 3
         lines += generate_add_data(15000, d)
         lines += generate_minus_data(15000, d)
-        lines += generate_multi_data(200000, d)
-        lines += generate_division_data(200000, d)
+        lines += generate_multi_data(500000, d)
+        lines += generate_division_data(500000, d)
     random.shuffle(lines)
     return lines
 
@@ -88,6 +88,8 @@ if __name__ == "__main__":
     EVAL_INT      = args.eval_interval
     SAVE_INT      = args.save_interval
 
+    best_model  = 87.5
+
     encode, decode = get_encode_decode(CHARS)
 
     config = GPTConfig(VOCAB_SIZE, BLOCK_SIZE, args.n_layer, args.n_head, args.n_embd, args.dropout)
@@ -101,12 +103,13 @@ if __name__ == "__main__":
             return float(current_step) / float(warmup_steps)
         progress = float(current_step - warmup_steps) / float(MAX_ITERS - warmup_steps)
         return 0.5 * (1.0 + math.cos(math.pi * progress))
-    scheduler = LambdaLR(opt, lr_lambda)
+    scheduler = LambdaLR(opt, lr_lambda, last_epoch=-1)
 
     if args.resume:
         ckpt = torch.load(args.resume_add, map_location=DEVICE)
         model.load_state_dict(ckpt["model_state_dict"])
         opt.load_state_dict(ckpt["optim_state_dict"])
+        scheduler.load_state_dict(ckpt["scheduler_state_dict"])
         start_iter = ckpt.get("iter", 1) + 1
     else:
         start_iter = 1
@@ -140,8 +143,8 @@ if __name__ == "__main__":
     small_val_prompts = [val_prompts[i] for i in small_val_idx]
     small_val_answers = [val_answers[i] for i in small_val_idx]
 
-    one_third  = MAX_ITERS / 6
-    two_thirds = 2 * MAX_ITERS / 6
+    one_third  = MAX_ITERS / 30
+    two_thirds = 2 * MAX_ITERS / 30
 
     STAGE1_IT = int(one_third // 100) * 100
     STAGE2_IT = int(two_thirds // 100) * 100
@@ -194,12 +197,12 @@ if __name__ == "__main__":
             logger.info(f" → train_acc={train_acc*100:.2f}%  valid_acc={valid_acc*100:.2f}%")
             model.train()
 
-        if it % SAVE_INT == 0:
-            torch.save({
-                "iter": it,
-                "model_state_dict": model.state_dict(),
-                "optim_state_dict": opt.state_dict()
-            }, f"all_{it}.pt")
+        # if it % SAVE_INT == 0:
+        #     torch.save({
+        #         "iter": it,
+        #         "model_state_dict": model.state_dict(),
+        #         "optim_state_dict": opt.state_dict()
+        #     }, f"all_{it}.pt")
 
         it += 1
 
@@ -246,12 +249,12 @@ if __name__ == "__main__":
             logger.info(f" → train_acc={train_acc*100:.2f}%  valid_acc={valid_acc*100:.2f}%")
             model.train()
 
-        if it % SAVE_INT == 0:
-            torch.save({
-                "iter": it,
-                "model_state_dict": model.state_dict(),
-                "optim_state_dict": opt.state_dict()
-            }, f"all_{it}.pt")
+        # if it % SAVE_INT == 0:
+        #     torch.save({
+        #         "iter": it,
+        #         "model_state_dict": model.state_dict(),
+        #         "optim_state_dict": opt.state_dict()
+        #     }, f"all_{it}.pt")
 
         it += 1
 
@@ -297,15 +300,25 @@ if __name__ == "__main__":
             model.eval()
             train_acc = evaluate(model, encode, decode, small_val_prompts, small_val_answers, device=DEVICE)
             valid_acc = evaluate(model, encode, decode, small_test_prompts, small_test_answers, device=DEVICE)
-            logger.info(f" → train_acc={train_acc*100:.2f}%  valid_acc={valid_acc*100:.2f}%")
+            valid_acc_2 = round(valid_acc * 100, 2)
+            logger.info(f" → train_acc={train_acc*100:.2f}%  valid_acc={valid_acc_2}%")
             model.train()
+            if valid_acc_2 > best_model:
+                torch.save({
+                    "iter": it,
+                    "model_state_dict": model.state_dict(),
+                    "optim_state_dict": opt.state_dict(),
+                    "scheduler_state_dict": scheduler.state_dict()
+                }, f"all_{it}_{valid_acc_2}.pt")
+                best_model = valid_acc_2
 
         if it % SAVE_INT == 0:
             torch.save({
                 "iter": it,
                 "model_state_dict": model.state_dict(),
-                "optim_state_dict": opt.state_dict()
-            }, f"all_{it}.pt")
+                "optim_state_dict": opt.state_dict(),
+                "scheduler_state_dict": scheduler.state_dict()
+            }, f"all_{it}_{valid_acc_2}.pt")
 
         it += 1
 
